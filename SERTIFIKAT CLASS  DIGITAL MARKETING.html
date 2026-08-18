@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sertifikat Pelatihan Interaktif - Difa Academy</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Montserrat:wght@400;500;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #e0e0e0;
+            font-family: 'Montserrat', sans-serif;
+            color: #1a1a1a;
+        }
+
+        /* PANEL PENGATURAN / EDITING FORM */
+        .editor-panel {
+            max-width: 297mm;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .editor-panel h2 {
+            font-size: 14pt;
+            color: #0d233a;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #c59b27;
+            padding-bottom: 5px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 8.5pt;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .form-group input, .form-group select {
+            padding: 8px 10px;
+            font-size: 9pt;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+        .form-group input:focus {
+            border-color: #0d233a;
+        }
+
+        /* FITUR TANDA TANGAN SECTION IN EDITOR */
+        .sig-editor-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+        }
+        .sig-card {
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .sig-card h4 {
+            font-size: 10pt;
+            color: #0d233a;
+            margin-bottom: 8px;
+        }
+        .canvas-container {
+            position: relative;
+            margin-bottom: 8px;
+        }
+        canvas.sig-canvas {
+            border: 1px dashed #0d233a;
+            border-radius: 4px;
+            background: #ffffff;
+            cursor: crosshair;
+            touch-action: none;
+            width: 100%;
+            height: 100px;
+        }
+        .sig-btn-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .btn-sig {
+            padding: 5px 10px;
+            font-size: 8pt;
+            font-weight: 600;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-clear { background-color: #e74c3c; color: white; }
+        .btn-apply { background-color: #27ae60; color: white; }
+        
+        .btn-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .btn-action {
+            border: none;
+            padding: 10px 20px;
+            font-size: 9.5pt;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            transition: background 0.2s;
+        }
+        .btn-download-pdf {
+            background-color: #27ae60;
+            color: #ffffff;
+        }
+        .btn-download-pdf:hover {
+            background-color: #219150;
+        }
+        .btn-print {
+            background-color: #0d233a;
+            color: #ffffff;
+        }
+        .btn-print:hover {
+            background-color: #163654;
+        }
+
+        /* AREA SERTIFIKAT YANG AKAN DI-DOWNLOAD */
+        #certificate-area {
+            width: 297mm;
+            margin: 0 auto;
+        }
+
+        /* CONTAINER A4 LANDSCAPE (Presisi PDF) */
+        .page {
+            width: 297mm;
+            height: 209.5mm; /* Ditinggikan presisi agar tidak tembus ke halaman berikutnya */
+            margin: 0 auto 20px auto;
+            background: #ffffff;
+            padding: 10mm;
+            position: relative;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            page-break-after: always;
+            page-break-inside: avoid;
+            overflow: hidden;
+        }
+
+        /* BINGKAI SERTIFIKAT MEWAH & ELEGAN (ORNAMEN SVG BACKGROUND) */
+        .certificate-border {
+            border: 4px solid #0d233a;
+            outline: 2px solid #c59b27;
+            outline-offset: -8px;
+            height: 100%;
+            padding: 8mm 12mm;
+            position: relative;
+            background: radial-gradient(circle at center, #ffffff 50%, #f7f3e8 100%),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M0 0 L100 100 M100 0 L0 100" stroke="%23c59b27" stroke-width="0.1" opacity="0.15"/><circle cx="50" cy="50" r="40" stroke="%230d233a" stroke-width="0.2" fill="none" opacity="0.1"/></svg>');
+        }
+
+        /* CORNER ORNAMENTS MEWAH */
+        .corner-ornament {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .corner-top-left {
+            top: 4px;
+            left: 4px;
+        }
+        .corner-top-right {
+            top: 4px;
+            right: 4px;
+            transform: scaleX(-1);
+        }
+        .corner-bottom-left {
+            bottom: 4px;
+            left: 4px;
+            transform: scaleY(-1);
+        }
+        .corner-bottom-right {
+            bottom: 4px;
+            right: 4px;
+            transform: scale(-1, -1);
+        }
+
+        /* WATERMARK LOGO DI TENGAH LATAR BELAKANG */
+        .watermark-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 320px;
+            height: 320px;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* HEADER KOP DENGAN LOGO */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            border-bottom: 2px solid #0d233a;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        .header-logo {
+            width: 55px;
+            height: 55px;
+        }
+        .header-text {
+            text-align: center;
+        }
+        .institution-name {
+            font-family: 'Cinzel', serif;
+            font-size: 20pt;
+            font-weight: 800;
+            color: #0d233a;
+            letter-spacing: 1px;
+            line-height: 1.1;
+        }
+        .legality-info {
+            font-size: 8.5pt;
+            color: #444;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* JUDUL */
+        .cert-title-box {
+            text-align: center;
+            margin: 8px 0 12px 0;
+            position: relative;
+            z-index: 1;
+        }
+        .cert-title-main {
+            font-family: 'Cinzel', serif;
+            font-size: 22pt;
+            font-weight: 700;
+            color: #c59b27;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        .cert-title-sub {
+            font-size: 10pt;
+            font-style: italic;
+            color: #555;
+            margin-top: -2px;
+        }
+        .cert-number {
+            font-size: 9pt;
+            font-weight: 600;
+            color: #0d233a;
+            margin-top: 4px;
+        }
+
+        /* KONTEN SERTIFIKAT */
+        .content {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .certify-text {
+            font-size: 9.5pt;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        .participant-name {
+            font-family: 'Cinzel', serif;
+            font-size: 20pt;
+            font-weight: 700;
+            color: #0d233a;
+            border-bottom: 1.5px solid #c59b27;
+            display: inline-block;
+            padding: 0 25px 3px 25px;
+            margin-bottom: 4px;
+        }
+        .participant-ttl {
+            font-size: 9pt;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .course-statement {
+            font-size: 9.5pt;
+            color: #333;
+            line-height: 1.4;
+        }
+        .course-name {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #0d233a;
+            margin: 6px 0;
+            text-transform: uppercase;
+        }
+        .predicate {
+            font-weight: 700;
+            color: #c59b27;
+        }
+
+        /* FOOTER / TANDA TANGAN */
+        .footer-front {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 15px;
+            padding: 0 15mm;
+            position: relative;
+            z-index: 1;
+        }
+        .qr-box {
+            text-align: center;
+        }
+        .qr-placeholder {
+            width: 70px;
+            height: 70px;
+            border: 1px solid #ccc;
+            padding: 3px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .qr-text {
+            font-size: 7pt;
+            color: #666;
+            margin-top: 4px;
+        }
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+        .sig-city {
+            font-size: 9pt;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        .sig-title {
+            font-size: 9pt;
+            font-weight: 600;
+            color: #0d233a;
+        }
+        .sig-space-img {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sig-img {
+            max-height: 50px;
+            max-width: 150px;
+            object-fit: contain;
+        }
+        .sig-name {
+            font-size: 10pt;
+            font-weight: 700;
+            color: #0d233a;
+            text-decoration: underline;
+        }
+
+        /* HALAMAN TRANSKRIP */
+        .transcript-header {
+            text-align: center;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        .transcript-title {
+            font-family: 'Cinzel', serif;
+            font-size: 16pt;
+            font-weight: 700;
+            color: #0d233a;
+        }
+        .transcript-sub {
+            font-size: 9pt;
+            color: #666;
+            font-style: italic;
+        }
+        .meta-table {
+            width: 100%;
+            margin-bottom: 15px;
+            font-size: 9pt;
+            position: relative;
+            z-index: 1;
+        }
+        .meta-table td {
+            padding: 3px 0;
+        }
+
+        /* TABEL NILAI */
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 8.5pt;
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.85);
+        }
+        .score-table th, .score-table td {
+            border: 1px solid #0d233a;
+            padding: 6px 10px;
+        }
+        .score-table th {
+            background-color: #0d233a;
+            color: #ffffff;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .score-table td.center {
+            text-align: center;
+        }
+        .score-table tr:nth-child(even) {
+            background-color: rgba(248, 249, 250, 0.85);
+        }
+        .total-row {
+            font-weight: 700;
+            background-color: rgba(241, 243, 245, 0.9) !important;
+        }
+
+        .scale-box {
+            font-size: 8pt;
+            color: #555;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* CETAK MANUAL & ATURAN PDF */
+        @media print {
+            body {
+                background: none;
+            }
+            .editor-panel {
+                display: none !important;
+            }
+            .page {
+                margin: 0;
+                box-shadow: none;
+                width: 297mm;
+                height: 210mm;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="editor-panel">
+        <h2>Panel Edit Data & Download Sertifikat</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nama Peserta:</label>
+                <input type="text" id="inputNama" value="ARIEF DURACHMAN, S.Pd." oninput="updateData()">
+            </div>
+            <div class="form-group">
+                <label>Tempat, Tanggal Lahir:</label>
+                <input type="text" id="inputTTL" value="Cirebon, 01 Februari 1993" oninput="updateData()">
+            </div>
+            <div class="form-group">
+                <label>Nomor Sertifikat:</label>
+                <input type="text" id="inputNoSertifikat" value="005/DM/VIII/2026" oninput="updateData()">
+            </div>
+            <div class="form-group">
+                <label>Nama Program Pelatihan:</label>
+                <input type="text" id="inputProgram" value="DIGITAL MARKETING SPECIALIST" oninput="updateData()">
+            </div>
+            <div class="form-group">
+                <label>Tanggal Pelatihan:</label>
+                <input type="text" id="inputTanggalPelatihan" value="10 Agustus s.d. 18 Agustus 2026" oninput="updateData()">
+            </div>
+            <div class="form-group">
+                <label>Predikat Kelulusan:</label>
+                <input type="text" id="inputPredikat" value="SANGAT BAIK (DISTINCTION)" oninput="updateData()">
+            </div>
+            <div class="form-group">
+                <label>Kota & Tanggal Penerbitan:</label>
+                <input type="text" id="inputKotaTgl" value="Cirebon, 18 Agustus 2026" oninput="updateData()">
+            </div>
+            <div class="form-group">
+                <label>Nama Director / Pimpinan:</label>
+                <input type="text" id="inputDirektur" value="Budi Santoso, S.Kom., M.M." oninput="updateData()">
+            </div>
+            <div class="form-group">
+                <label>Nama Lead Instructor / Pengajar Utama:</label>
+                <input type="text" id="inputPengajar" value="Rahmat Hidayat, S.T." oninput="updateData()">
+            </div>
+        </div>
+
+        <div class="sig-editor-section">
+            <div class="sig-card">
+                <h4>✍️ Tanda Tangan Director (Halaman 1)</h4>
+                <div class="canvas-container">
+                    <canvas id="canvasDirektur" class="sig-canvas" width="300" height="100"></canvas>
+                </div>
+                <div class="sig-btn-row">
+                    <button type="button" class="btn-sig btn-clear" onclick="clearSig('direktur')">Clear/Hapus</button>
+                    <button type="button" class="btn-sig btn-apply" onclick="applySig('direktur')">Terapkan Coretan</button>
+                </div>
+                <div class="form-group">
+                    <label>Atau Upload Gambar TTD (PNG Transparan):</label>
+                    <input type="file" accept="image/*" onchange="uploadSig(event, 'direktur')">
+                </div>
+            </div>
+
+            <div class="sig-card">
+                <h4>✍️ Tanda Tangan Head Instructor (Halaman 2)</h4>
+                <div class="canvas-container">
+                    <canvas id="canvasPengajar" class="sig-canvas" width="300" height="100"></canvas>
+                </div>
+                <div class="sig-btn-row">
+                    <button type="button" class="btn-sig btn-clear" onclick="clearSig('pengajar')">Clear/Hapus</button>
+                    <button type="button" class="btn-sig btn-apply" onclick="applySig('pengajar')">Terapkan Coretan</button>
+                </div>
+                <div class="form-group">
+                    <label>Atau Upload Gambar TTD (PNG Transparan):</label>
+                    <input type="file" accept="image/*" onchange="uploadSig(event, 'pengajar')">
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn-action btn-download-pdf" onclick="downloadPDF()">📥 Download PDF Langsung</button>
+            <button class="btn-action btn-print" onclick="window.print()">🖨️ Cetak / Print Manual</button>
+        </div>
+    </div>
+
+    <div id="certificate-area">
+
+        <!-- HALAMAN 1 -->
+        <div class="page">
+            <div class="certificate-border">
+                
+                <!-- SVG ORNAMEN POJOK ELEGAN -->
+                <svg class="corner-ornament corner-top-left" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 0 L 100 0 C 50 0 0 50 0 100 Z" fill="#0d233a"/>
+                    <path d="M 0 0 L 80 0 C 40 0 0 40 0 80 Z" fill="#c59b27"/>
+                    <path d="M 0 0 L 60 0 C 30 0 0 30 0 60 Z" fill="#ffffff"/>
+                    <circle cx="20" cy="20" r="5" fill="#c59b27"/>
+                </svg>
+                <svg class="corner-ornament corner-top-right" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 0 L 100 0 C 50 0 0 50 0 100 Z" fill="#0d233a"/>
+                    <path d="M 0 0 L 80 0 C 40 0 0 40 0 80 Z" fill="#c59b27"/>
+                    <path d="M 0 0 L 60 0 C 30 0 0 30 0 60 Z" fill="#ffffff"/>
+                    <circle cx="20" cy="20" r="5" fill="#c59b27"/>
+                </svg>
+                <svg class="corner-ornament corner-bottom-left" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 0 L 100 0 C 50 0 0 50 0 100 Z" fill="#0d233a"/>
+                    <path d="M 0 0 L 80 0 C 40 0 0 40 0 80 Z" fill="#c59b27"/>
+                    <path d="M 0 0 L 60 0 C 30 0 0 30 0 60 Z" fill="#ffffff"/>
+                    <circle cx="20" cy="20" r="5" fill="#c59b27"/>
+                </svg>
+                <svg class="corner-ornament corner-bottom-right" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 0 L 100 0 C 50 0 0 50 0 100 Z" fill="#0d233a"/>
+                    <path d="M 0 0 L 80 0 C 40 0 0 40 0 80 Z" fill="#c59b27"/>
+                    <path d="M 0 0 L 60 0 C 30 0 0 30 0 60 Z" fill="#ffffff"/>
+                    <circle cx="20" cy="20" r="5" fill="#c59b27"/>
+                </svg>
+
+                <!-- WATERMARK LATAR BELAKANG -->
+                <svg class="watermark-bg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="46" fill="#0d233a" stroke="#c59b27" stroke-width="3"/>
+                    <path d="M50 22 L80 34 L50 46 L20 34 Z" fill="#c59b27"/>
+                    <path d="M30 42 L30 58 C30 65 70 65 70 58 L70 42" fill="none" stroke="#c59b27" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M73 37 L73 57" fill="none" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="73" cy="59" r="2.5" fill="#ffffff"/>
+                    <polygon points="50,68 53,77 62,77 55,82 58,91 50,85 42,91 45,82 38,77 47,77" fill="#c59b27"/>
+                </svg>
+
+                <div class="header">
+                    <svg class="header-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="46" fill="#0d233a" stroke="#c59b27" stroke-width="3"/>
+                        <path d="M50 22 L80 34 L50 46 L20 34 Z" fill="#c59b27"/>
+                        <path d="M30 42 L30 58 C30 65 70 65 70 58 L70 42" fill="none" stroke="#c59b27" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M73 37 L73 57" fill="none" stroke="#ffffff" stroke-width="2"/>
+                        <circle cx="73" cy="59" r="2.5" fill="#ffffff"/>
+                        <polygon points="50,68 53,77 62,77 55,82 58,91 50,85 42,91 45,82 38,77 47,77" fill="#c59b27"/>
+                    </svg>
+                    <div class="header-text">
+                        <div class="institution-name">DIFA ACADEMY DIGITAL</div>
+                        <div class="legality-info">
+                            Pusat Pelatihan & Digital Learning Hub &nbsp;|&nbsp; Online Intensive Class
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cert-title-box">
+                    <div class="cert-title-main">SERTIFIKAT PELATIHAN</div>
+                    <div class="cert-title-sub">CERTIFICATE OF COMPLETION</div>
+                    <div class="cert-number">Nomor: <span id="viewNoSertifikat">005/DM/VIII/2026</span></div>
+                </div>
+
+                <div class="content">
+                    <div class="certify-text">Diberikan kepada / <i>This is to certify that</i>:</div>
+                    <div class="participant-name" id="viewNama">ARIEF DURACHMAN, S.Pd.</div>
+                    <div class="participant-ttl">Tempat, Tgl Lahir: <span id="viewTTL">Cirebon, 01 Februari 1993</span></div>
+                    
+                    <div class="course-statement">
+                        Telah menyelesaikan dan dinyatakan LULUS pada Program Pelatihan Intensive Online:<br>
+                        <i>Has successfully completed and passed the Online Intensive Training Program of:</i>
+                    </div>
+                    
+                    <div class="course-name">"<span id="viewProgram">DIGITAL MARKETING SPECIALIST</span>"</div>
+                    
+                    <div class="course-statement">
+                        yang diselenggarakan oleh <b>Difa Academy Digital</b> pada tanggal <span id="viewTglPelatihan">10 Agustus s.d. 18 Agustus 2026</span><br>
+                        dengan Predikat: <span class="predicate" id="viewPredikat">SANGAT BAIK (DISTINCTION)</span>
+                    </div>
+                </div>
+
+                <div class="footer-front">
+                    <div class="qr-box">
+                        <img class="qr-placeholder" id="viewQRCode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VERIFIED-005-DM-VIII-2026" alt="QR Code Verifikasi">
+                        <div class="qr-text">Scan Verifikasi Keabsahan</div>
+                    </div>
+
+                    <div class="signature-box">
+                        <div class="sig-city" id="viewKotaTgl1">Cirebon, 18 Agustus 2026</div>
+                        <div class="sig-title">Director Difa Academy Digital,</div>
+                        <div class="sig-space-img">
+                            <img id="viewTTDDirektur" class="sig-img" src="" alt="" style="display:none;">
+                        </div>
+                        <div class="sig-name" id="viewDirektur">Budi Santoso, S.Kom., M.M.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="html2pdf__page-break"></div>
+
+        <!-- HALAMAN 2 -->
+        <div class="page">
+            <div class="certificate-border">
+
+                <!-- SVG ORNAMEN POJOK ELEGAN HALAMAN 2 -->
+                <svg class="corner-ornament corner-top-left" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 0 L 100 0 C 50 0 0 50 0 100 Z" fill="#0d233a"/>
+                    <path d="M 0 0 L 80 0 C 40 0 0 40 0 80 Z" fill="#c59b27"/>
+                    <path d="M 0 0 L 60 0 C 30 0 0 30 0 60 Z" fill="#ffffff"/>
+                    <circle cx="20" cy="20" r="5" fill="#c59b27"/>
+                </svg>
+                <svg class="corner-ornament corner-top-right" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 0 L 100 0 C 50 0 0 50 0 100 Z" fill="#0d233a"/>
+                    <path d="M 0 0 L 80 0 C 40 0 0 40 0 80 Z" fill="#c59b27"/>
+                    <path d="M 0 0 L 60 0 C 30 0 0 30 0 60 Z" fill="#ffffff"/>
+                    <circle cx="20" cy="20" r="5" fill="#c59b27"/>
+                </svg>
+                <svg class="corner-ornament corner-bottom-left" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 0 L 100 0 C 50 0 0 50 0 100 Z" fill="#0d233a"/>
+                    <path d="M 0 0 L 80 0 C 40 0 0 40 0 80 Z" fill="#c59b27"/>
+                    <path d="M 0 0 L 60 0 C 30 0 0 30 0 60 Z" fill="#ffffff"/>
+                    <circle cx="20" cy="20" r="5" fill="#c59b27"/>
+                </svg>
+                <svg class="corner-ornament corner-bottom-right" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 0 0 L 100 0 C 50 0 0 50 0 100 Z" fill="#0d233a"/>
+                    <path d="M 0 0 L 80 0 C 40 0 0 40 0 80 Z" fill="#c59b27"/>
+                    <path d="M 0 0 L 60 0 C 30 0 0 30 0 60 Z" fill="#ffffff"/>
+                    <circle cx="20" cy="20" r="5" fill="#c59b27"/>
+                </svg>
+
+                <!-- WATERMARK LATAR BELAKANG HALAMAN 2 -->
+                <svg class="watermark-bg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="46" fill="#0d233a" stroke="#c59b27" stroke-width="3"/>
+                    <path d="M50 22 L80 34 L50 46 L20 34 Z" fill="#c59b27"/>
+                    <path d="M30 42 L30 58 C30 65 70 65 70 58 L70 42" fill="none" stroke="#c59b27" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M73 37 L73 57" fill="none" stroke="#ffffff" stroke-width="2"/>
+                    <circle cx="73" cy="59" r="2.5" fill="#ffffff"/>
+                    <polygon points="50,68 53,77 62,77 55,82 58,91 50,85 42,91 45,82 38,77 47,77" fill="#c59b27"/>
+                </svg>
+                
+                <div class="transcript-header">
+                    <div class="transcript-title">TRANSKRIP NILAI & MATERI PELATIHAN</div>
+                    <div class="transcript-sub">TRANSCRIPT OF ACADEMIC RECORD & MODULES</div>
+                </div>
+
+                <table class="meta-table">
+                    <tr>
+                        <td width="18%"><b>Nama Peserta</b></td>
+                        <td width="2%">:</td>
+                        <td width="40%"><span id="viewNamaTranskrip">ARIEF DURACHMAN, S.Pd.</span></td>
+                        <td width="18%"><b>Total Jam Pelatihan</b></td>
+                        <td width="2%">:</td>
+                        <td width="20%">60 JP (Jam Pelajaran)</td>
+                    </tr>
+                    <tr>
+                        <td><b>Program Pelatihan</b></td>
+                        <td>:</td>
+                        <td><span id="viewProgramTranskrip">Digital Marketing Specialist</span></td>
+                        <td><b>Nomor Sertifikat</b></td>
+                        <td>:</td>
+                        <td><span id="viewNoSertifikatTranskrip">005/DM/VIII/2026</span></td>
+                    </tr>
+                </table>
+
+                <table class="score-table">
+                    <thead>
+                        <tr>
+                            <th width="8%">NO</th>
+                            <th width="52%">MATA PELATIHAN / MODUL MATERI</th>
+                            <th width="15%" class="center">DURASI (JP)</th>
+                            <th width="15%" class="center">NILAI ANGKA</th>
+                            <th width="10%" class="center">PREDIKAT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="center">1</td>
+                            <td>Riset Pasar & Digital Marketing Strategy</td>
+                            <td class="center">10 JP</td>
+                            <td class="center">90</td>
+                            <td class="center">Sangat Baik</td>
+                        </tr>
+                        <tr>
+                            <td class="center">2</td>
+                            <td>Content Creation & Social Media Management</td>
+                            <td class="center">12 JP</td>
+                            <td class="center">88</td>
+                            <td class="center">Baik</td>
+                        </tr>
+                        <tr>
+                            <td class="center">3</td>
+                            <td>Optimasi Mesin Pencari (Search Engine Optimization - SEO)</td>
+                            <td class="center">12 JP</td>
+                            <td class="center">84</td>
+                            <td class="center">Baik</td>
+                        </tr>
+                        <tr>
+                            <td class="center">4</td>
+                            <td>Meta Ads & Google Ads Management</td>
+                            <td class="center">16 JP</td>
+                            <td class="center">92</td>
+                            <td class="center">Sangat Baik</td>
+                        </tr>
+                        <tr>
+                            <td class="center">5</td>
+                            <td>Data Analysis & Evaluation (Google Analytics / GA4)</td>
+                            <td class="center">10 JP</td>
+                            <td class="center">87</td>
+                            <td class="center">Baik</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td colspan="2" class="center">TOTAL JAM PELAJARAN / RATA-RATA NILAI</td>
+                            <td class="center">60 JP</td>
+                            <td class="center">88.2</td>
+                            <td class="center">Sangat Baik</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="scale-box">
+                    <b>Keterangan Skala Penilaian:</b><br>
+                    90 - 100 = Sangat Baik (Distinction) &nbsp;|&nbsp; 80 - 89 = Baik (Good) &nbsp;|&nbsp; 70 - 79 = Cukup (Satisfactory)
+                </div>
+
+                <div class="footer-front" style="margin-top: 15px;">
+                    <div></div>
+                    <div class="signature-box">
+                        <div class="sig-city" id="viewKotaTgl2">Cirebon, 18 Agustus 2026</div>
+                        <div class="sig-title">Head Instructor / Pengajar Utama,</div>
+                        <div class="sig-space-img">
+                            <img id="viewTTDPengajar" class="sig-img" src="" alt="" style="display:none;">
+                        </div>
+                        <div class="sig-name" id="viewPengajar">Rahmat Hidayat, S.T.</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Inisialisasi Signature Pad
+        let padDirektur, padPengajar;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvasDir = document.getElementById('canvasDirektur');
+            const canvasPeng = document.getElementById('canvasPengajar');
+
+            padDirektur = new SignaturePad(canvasDir, { penColor: 'rgb(10, 25, 47)' });
+            padPengajar = new SignaturePad(canvasPeng, { penColor: 'rgb(10, 25, 47)' });
+            
+            updateData();
+        });
+
+        // Update Teks secara Real-time + Update Dynamic QR Code ke WA Link
+        function updateData() {
+            const nama = document.getElementById('inputNama').value;
+            const ttl = document.getElementById('inputTTL').value;
+            const noSertifikat = document.getElementById('inputNoSertifikat').value;
+            const program = document.getElementById('inputProgram').value;
+            const tglPelatihan = document.getElementById('inputTanggalPelatihan').value;
+            const predikat = document.getElementById('inputPredikat').value;
+            const kotaTgl = document.getElementById('inputKotaTgl').value;
+            const direktur = document.getElementById('inputDirektur').value;
+            const pengajar = document.getElementById('inputPengajar').value;
+
+            document.getElementById('viewNama').innerText = nama;
+            document.getElementById('viewNamaTranskrip').innerText = nama;
+            document.getElementById('viewTTL').innerText = ttl;
+            document.getElementById('viewNoSertifikat').innerText = noSertifikat;
+            document.getElementById('viewNoSertifikatTranskrip').innerText = noSertifikat;
+            document.getElementById('viewProgram').innerText = program;
+            document.getElementById('viewProgramTranskrip').innerText = program;
+            document.getElementById('viewTglPelatihan').innerText = tglPelatihan;
+            document.getElementById('viewPredikat').innerText = predikat;
+            document.getElementById('viewKotaTgl1').innerText = kotaTgl;
+            document.getElementById('viewKotaTgl2').innerText = kotaTgl;
+            document.getElementById('viewDirektur').innerText = direktur;
+            document.getElementById('viewPengajar').innerText = pengajar;
+
+            // Link WhatsApp Verifikasi Otomatis
+            const waTarget = `https://wa.me/62859109851554?text=Halo%20Difa%20Academy,%20saya%20ingin%20verifikasi%20keabsahan%20sertifikat%20nomor%20${encodeURIComponent(noSertifikat)}`;
+            document.getElementById('viewQRCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(waTarget)}`;
+        }
+
+        // Terapkan Coretan Tangan ke Sertifikat
+        function applySig(role) {
+            let pad = role === 'direktur' ? padDirektur : padPengajar;
+            let imgElem = role === 'direktur' ? document.getElementById('viewTTDDirektur') : document.getElementById('viewTTDPengajar');
+
+            if (pad.isEmpty()) {
+                alert("Silakan buat coretan tanda tangan pada kotak canvas terlebih dahulu.");
+                return;
+            }
+            imgElem.src = pad.toDataURL('image/png');
+            imgElem.style.display = 'block';
+        }
+
+        // Hapus Coretan Tangan
+        function clearSig(role) {
+            let pad = role === 'direktur' ? padDirektur : padPengajar;
+            let imgElem = role === 'direktur' ? document.getElementById('viewTTDDirektur') : document.getElementById('viewTTDPengajar');
+
+            pad.clear();
+            imgElem.src = '';
+            imgElem.style.display = 'none';
+        }
+
+        // Upload File Gambar TTD (PNG)
+        function uploadSig(event, role) {
+            const file = event.target.files[0];
+            let imgElem = role === 'direktur' ? document.getElementById('viewTTDDirektur') : document.getElementById('viewTTDPengajar');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imgElem.src = e.target.result;
+                    imgElem.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Fungsi Download PDF Tanpa Terpotong
+        function downloadPDF() {
+            const element = document.getElementById('certificate-area');
+            const namaPeserta = document.getElementById('inputNama').value || 'Sertifikat';
+            
+            const opt = {
+                margin:       0,
+                filename:     `Sertifikat_${namaPeserta.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    scrollX: 0, 
+                    scrollY: 0,
+                    windowWidth: document.documentElement.offsetWidth
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
